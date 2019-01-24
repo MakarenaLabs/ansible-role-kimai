@@ -1,0 +1,11 @@
+---
+k_dbserver: mariadb
+ondrej_php: 'yes'
+php_version: 7.0
+k_webserver: nginx
+k_serveradmin: info@example.com
+k_domainname: example.com
+k_mysql_root_user: root
+k_mysql_root_password: root
+k_mysql_user: kimai
+k_mysql_password: kimai

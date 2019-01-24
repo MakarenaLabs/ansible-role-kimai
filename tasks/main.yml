@@ -1,0 +1,159 @@
+---
+- name: Kimai | Installing {{ k_dbserver }} database server
+  apt:
+    pkg: ['{{ k_dbserver }}-server', 'python-pymysql', 'unzip']
+    update_cache: yes
+    cache_valid_time: 86400
+    state: present
+
+- name: Kimai | PHP | Install Ondrej PHP PPA
+  apt_repository: 
+    repo: 'ppa:ondrej/php'
+    update_cache: yes
+  when: ondrej_php == 'yes'
+
+- name: Kimai | PHP | Installing php
+  apt:
+    pkg: ['php{{ php_version }}', 'php-pear']
+    update_cache: yes
+    cache_valid_time: 86400
+    state: present
+
+- name: Kimai | PHP | Installing php extensions
+  apt:
+    pkg: ['php{{ php_version }}-curl', 'php{{ php_version }}-dev', 'php{{ php_version }}-gd', 'php{{ php_version }}-mbstring', 
+          'php{{ php_version }}-zip', 'php{{ php_version }}-mysql', 'php{{ php_version }}-xml']
+    update_cache: yes
+    cache_valid_time: 86400
+    state: present
+
+- name: Kimai | Nginx | Install nginx
+  apt:
+    pkg: nginx
+    update_cache: yes
+    cache_valid_time: 86400
+    state: present
+  when: k_webserver == "nginx"
+
+- name: Kimai | Apache | Install apache
+  apt:
+    pkg: ['apache2', 'libapache2-mod-php']
+    update_cache: yes
+    cache_valid_time: 86400
+    state: present
+  when: k_webserver == "apache"
+
+- name: Kimai | PHP | Copy custom php.ini file for Nginx webserver
+  copy:
+    src: php.ini
+    dest: "/etc/php/{{ php_version }}/nginx/"
+    mode: 0755
+  when: k_webserver == 'nginx'
+
+- name: Kimai | PHP | Copy custom php.ini file for Apache webserver
+  copy:
+    src: php.ini
+    dest: "/etc/php/{{ php_version }}/apache2/"
+    mode: 0755
+  when: k_webserver == 'apache'
+
+- name: Kimai | Nginx | Copy webserver config file
+  template:
+    src: nginx_vhost.j2
+    dest: "/etc/nginx/sites-available/{{ k_domainname }}"
+    mode: 0755
+  when: k_webserver == 'nginx'
+
+- name: Kimai | Apache | Copy webserver config file
+  template:
+    src: apache_vhost.j2
+    dest: "/etc/apache2/sites-available/{{ k_domainname }}.conf"
+    mode: 0755
+  when: k_webserver == 'apache'
+
+- name: Kimai | Create mysql database
+  mysql_db:
+    login_unix_socket: /var/run/mysqld/mysqld.sock
+    name: kimai
+    state: present
+
+- name: Kimai | Create database user
+  command: "mysql -u {{ k_mysql_root_user }} -p{{ k_mysql_root_password }} -e \"GRANT ALL PRIVILEGES ON *.* TO '{{ k_mysql_user }}'@'localhost' IDENTIFIED BY '{{ k_mysql_password }}';\""
+
+- name: Kimai | Create kimai directory in /var/www/
+  file:
+    path: "/var/www/{{ k_domainname }}"
+    recurse: yes
+    owner: www-data
+    group: www-data
+    state: directory
+    mode: 0755
+    
+- name: Kimai | Download kimai stable version
+  unarchive:
+    src: https://github.com/kimai/kimai/releases/download/1.3.1/kimai_1.3.1.zip
+    dest: "/var/www/{{ k_domainname }}"
+    remote_src: True
+
+- name: Kimai | Nginx | Check if rules file exists
+  stat: 
+    path: "/etc/nginx/sites-enabled/{{ k_domainname }}"
+  register: nginx_site_enabled
+  when: k_webserver == 'nginx'
+
+- name: Kimai | Nginx | Enable domain and reload apache2 service
+  command: "ln -s /etc/nginx/sites-available/{{ k_domainname }} /etc/nginx/sites-enabled/"
+  when: k_webserver == 'nginx' and nginx_site_enabled.stat.exists == False
+
+- name: Kimai | Apache | Enable domain and reload apache2 service
+  command: "a2ensite {{ k_domainname }}.conf"
+  args:
+    chdir: /etc/apache2/sites-available/
+  when: k_webserver == 'apache'
+
+- name: Kimai | Apache | Restart apache2
+  service:
+    name: apache2
+    state: reloaded
+  when: k_webserver == 'apache'
+
+- name: Kimai | Add ppa repository for Certbot
+  apt_repository:
+    repo: 'ppa:certbot/certbot'
+
+- name: Kimai | Nginx | Installing dependencies for certbot
+  apt:
+    pkg: ['software-properties-common', 'python-certbot-nginx']
+    update_cache: yes
+    cache_valid_time: 86400
+    state: present
+  when: k_webserver == 'nginx'
+
+- name: Kimai | Apache | Installing dependencies for certbot
+  apt:
+    pkg: ['software-properties-common', 'python-certbot-apache']
+    update_cache: yes
+    cache_valid_time: 86400
+    state: present
+  when: k_webserver == 'apache'
+
+- name: Kimai | Change owner and mode for kimai directory in /var/www/
+  file:
+    path: "/var/www/{{ k_domainname }}"
+    recurse: yes
+    owner: www-data
+    group: www-data
+    state: directory
+    mode: 0755
+
+- name: Kimai | Nginx | Restart nginx
+  service:
+    name: nginx
+    state: restarted
+  when: k_webserver == 'nginx'
+
+- name: Kimai | Apache | Restart nginx
+  service:
+      name: apache2
+      state: restarted
+  when: k_webserver == 'apache'
