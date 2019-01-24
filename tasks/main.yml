@@ -7,7 +7,7 @@
     state: present
 
 - name: Kimai | PHP | Install Ondrej PHP PPA
-  apt_repository: 
+  apt_repository:
     repo: 'ppa:ondrej/php'
     update_cache: yes
   when: ondrej_php == 'yes'
@@ -21,8 +21,9 @@
 
 - name: Kimai | PHP | Installing php extensions
   apt:
-    pkg: ['php{{ php_version }}-curl', 'php{{ php_version }}-dev', 'php{{ php_version }}-gd', 'php{{ php_version }}-mbstring', 
-          'php{{ php_version }}-zip', 'php{{ php_version }}-mysql', 'php{{ php_version }}-xml']
+    pkg: ['php{{ php_version }}-curl', 'php{{ php_version }}-dev', 'php{{ php_version }}-gd',
+          'php{{ php_version }}-mbstring', 'php{{ php_version }}-zip',
+          'php{{ php_version }}-mysql', 'php{{ php_version }}-xml']
     update_cache: yes
     cache_valid_time: 86400
     state: present
@@ -88,7 +89,7 @@
     group: www-data
     state: directory
     mode: 0755
-    
+
 - name: Kimai | Download kimai stable version
   unarchive:
     src: https://github.com/kimai/kimai/releases/download/1.3.1/kimai_1.3.1.zip
@@ -96,7 +97,7 @@
     remote_src: True
 
 - name: Kimai | Nginx | Check if rules file exists
-  stat: 
+  stat:
     path: "/etc/nginx/sites-enabled/{{ k_domainname }}"
   register: nginx_site_enabled
   when: k_webserver == 'nginx'
