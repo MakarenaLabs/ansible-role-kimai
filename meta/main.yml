@@ -1,0 +1,17 @@
+---
+galaxy_info:
+  role_name: kimai
+  author: matteocastagnaro
+  description: Kimai timesheet server to store your working hours
+  company: "makarenalabs.com"
+  license: "license (BSD, MIT)"
+  min_ansible_version: 1.4
+  platforms:
+  - name: Ubuntu
+    versions:
+    - trusty
+    - xenial
+    - yakkety
+  galaxy_tags:
+  - development
+  - web
