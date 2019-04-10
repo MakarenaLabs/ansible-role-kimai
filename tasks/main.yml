@@ -12,22 +12,6 @@
     update_cache: yes
   when: ondrej_php == 'yes'
 
-- name: Kimai | PHP | Installing php
-  apt:
-    pkg: ['php{{ php_version }}', 'php-pear']
-    update_cache: yes
-    cache_valid_time: 86400
-    state: present
-
-- name: Kimai | PHP | Installing php extensions
-  apt:
-    pkg: ['php{{ php_version }}-curl', 'php{{ php_version }}-dev', 'php{{ php_version }}-gd',
-          'php{{ php_version }}-mbstring', 'php{{ php_version }}-zip',
-          'php{{ php_version }}-mysql', 'php{{ php_version }}-xml']
-    update_cache: yes
-    cache_valid_time: 86400
-    state: present
-
 - name: Kimai | Nginx | Install nginx
   apt:
     pkg: nginx
@@ -43,6 +27,22 @@
     cache_valid_time: 86400
     state: present
   when: k_webserver == "apache"
+
+- name: Kimai | PHP | Installing php
+  apt:
+    pkg: ['php{{ php_version }}', 'php-pear']
+    update_cache: yes
+    cache_valid_time: 86400
+    state: present
+
+- name: Kimai | PHP | Installing php extensions
+  apt:
+    pkg: ['php{{ php_version }}-curl', 'php{{ php_version }}-dev', 'php{{ php_version }}-gd',
+          'php{{ php_version }}-mbstring', 'php{{ php_version }}-zip',
+          'php{{ php_version }}-mysql', 'php{{ php_version }}-xml']
+    update_cache: yes
+    cache_valid_time: 86400
+    state: present
 
 - name: Kimai | PHP | Copy custom php.ini file for Nginx webserver
   copy:
